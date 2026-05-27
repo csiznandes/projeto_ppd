@@ -14,8 +14,8 @@ void gaussianFilter(Mat &frame){
         {1,2,1}
     };
 
-    #pragma omp parallel for
-    for(int y=1; y<frame.rows-1; y++){
+    #pragma omp parallel for  //OpenMP, para mostrar paralelização dos pixels, divididos por linhas
+    for(int y=1; y<frame.rows-1; y++){  
 
         for(int x=1; x<frame.cols-1; x++){
 
@@ -56,7 +56,7 @@ void sharpenFilter(Mat &frame){
         {0,-1,0}
     };
 
-    #pragma omp parallel for
+    #pragma omp parallel for  //OpenMP, para mostrar paralelização dos pixels, divididos por linhas
     for(int y=1;y<frame.rows-1;y++){
 
         for(int x=1;x<frame.cols-1;x++){
@@ -105,7 +105,7 @@ void sobelFilter(Mat &frame){
         {1,2,1}
     };
 
-    #pragma omp parallel for
+    #pragma omp parallel for  //OpenMP, para mostrar paralelização dos pixels, divididos por linhas
     for(int y=1;y<frame.rows-1;y++){
 
         for(int x=1;x<frame.cols-1;x++){

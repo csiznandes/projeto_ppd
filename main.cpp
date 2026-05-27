@@ -8,16 +8,14 @@ using namespace cv;
 
 int main(int argc,char** argv){
 
-MPI_Init(&argc,&argv);
+MPI_Init(&argc,&argv);  //Inicia o MPI
 
 int rank,size;
 
 MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 MPI_Comm_size(MPI_COMM_WORLD,&size);
 
-
 //Coordenador
-
 if(rank==0){
 
     VideoCapture video("video.mp4");
@@ -50,7 +48,7 @@ if(rank==0){
         MPI_COMM_WORLD
         );
 
-        cout<<"Frame enviado"<<endl;
+        cout<<"[COORDENADOR] Frame enviado"<<endl;
 
         MPI_Recv(
         frame.data,
@@ -62,11 +60,14 @@ if(rank==0){
         MPI_STATUS_IGNORE
         );
 
-        cout<<"Frame recebido"<<endl;
+        cout<<"[COORDENADOR] Frame recebido"<<endl;
 
         imshow("Video Processado",frame);
 
         if(waitKey(30)==27)
+            break;
+
+        if(getWindowProperty("Video Processado", WND_PROP_VISIBLE) < 1)
             break;
     }
 
@@ -82,9 +83,7 @@ if(rank==0){
     );
 }
 
-
 //Trabalhador
-
 else{
 
 while(true){
@@ -121,13 +120,13 @@ MPI_COMM_WORLD,
 MPI_STATUS_IGNORE
 );
 
-cout<<"Processando..."<<endl;
+cout<<"[TRABALHADOR] Processando frame.."<<endl;
 
-//Escolha do filtro
+//ESCOLHER O FILTRO
 
-gaussianFilter(frame);
-// sharpenFilter(frame);
-// sobelFilter(frame);
+//gaussianFilter(frame);
+//sharpenFilter(frame);
+sobelFilter(frame);
 
 MPI_Send(
 frame.data,
@@ -138,7 +137,7 @@ MPI_UNSIGNED_CHAR,
 MPI_COMM_WORLD
 );
 
-cout<<"Frame processado"<<endl;
+cout<<"[TRABALHADOR] Frame processado"<<endl;
 
 }
 
