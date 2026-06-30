@@ -2,6 +2,7 @@
 #include <mpi.h>
 #include <opencv2/opencv.hpp>
 #include <vector>
+#include <map>
 #include "filters.h"
 
 using namespace std;
@@ -40,6 +41,9 @@ int main(int argc, char** argv) {
         int frame_id = 0;
         int active_workers = 0;
 
+        int proximo_frame_para_exibir = 0;
+        map<int, Mat> buffer_frames;
+
         cout << "[COORDENADOR] Iniciando distribuição de frames com " << size - 1 << " trabalhadores." << endl;
 
         //Distribuição Inicial: Envia um frame para cada trabalhador disponível
@@ -65,8 +69,7 @@ int main(int argc, char** argv) {
             }
         }
 
-        //Para simplificar a exibição ordenada no terminal/tela do trabalho acadêmico, 
-        //vamos receber e reenviar dinamicamente enquanto houver vídeo:
+        //Processamento Dinâmico Reordenado
         while (active_workers > 0) {
             MPI_Status status;
             int metadata_recv[4];
@@ -86,10 +89,19 @@ int main(int argc, char** argv) {
             
             cout << "[COORDENADOR] Frame " << id_recebido << " recebido de volta do Trabalhador " << worker_que_respondeu << endl;
 
-            //Exibe o frame retornado
-            imshow("Video Processado", frame_processado);
-            if (waitKey(1) == 27) break; // ESC para sair
+            //INÍCIO DO AJUSTE DE ORDENAÇÃO: Guarda o frame recebido no buffer associado ao seu ID original
+            buffer_frames[id_recebido] = frame_processado;
 
+            //Verifica em sequência se o próximo frame esperado da linha do tempo já chegou
+            while (buffer_frames.find(proximo_frame_para_exibir) != buffer_frames.end()) {
+                //Exibe o frame na ordem correta
+                imshow("Video Processado", buffer_frames[proximo_frame_para_exibir]);
+                if (waitKey(1) == 27) break; //ESC para sair
+
+                //Apaga do mapa para liberar a memória RAM do computador
+                buffer_frames.erase(proximo_frame_para_exibir);
+                proximo_frame_para_exibir++;
+            }
             //Envia o próximo frame para o trabalhador que acabou de ficar livre
             if (video.read(frame)) {
                 int next_metadata[4] = {frame.rows, frame.cols, frame.type(), frame_id};
@@ -134,9 +146,9 @@ int main(int argc, char** argv) {
 
             //Executa o filtro de forma paralela
             //Alternar os filtros aqui
-            //sobelFilter(frame);
+            sobelFilter(frame);
             //sharpenFilter(frame); 
-            gaussianFilter(frame); 
+            //gaussianFilter(frame); 
 
             //Devolve os metadados confirmando o ID do frame processado
             MPI_Send(metadata, 4, MPI_INT, 0, 0, MPI_COMM_WORLD);
